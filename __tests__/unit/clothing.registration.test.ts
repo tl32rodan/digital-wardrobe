@@ -99,33 +99,41 @@ describe('Spec §4.1 — Clothing registration', () => {
   // ── seasonal archive ──────────────────────────────────────────────────────
 
   describe('archiveSeason() (spec §4.5)', () => {
-    it('removes summer clothes from recommendation pool when archiving 夏', () => {
+    it('sets status to "archived" (not retired) for seasonal items', () => {
+      // archived = temporarily out of recommendation pool; still owned and wearable
       const summerTop = makeItem({ seasons: ['夏'], status: 'available' });
-      const allSeasonTop = makeItem({ id: 'all', seasons: ['春', '夏', '秋', '冬'], status: 'available' });
-      const archived = service.archiveSeason([summerTop, allSeasonTop], ['夏']);
-      const summerArchived = archived.find((i) => i.id === summerTop.id);
-      expect(summerArchived?.status).toBe('retired'); // or a dedicated 'archived' status
+      const result = service.archiveSeason([summerTop], ['夏']);
+      expect(result[0].status).toBe('archived');
     });
 
-    it('does not archive items that span other seasons too', () => {
-      // A 春夏 item archived for 夏 should still be available for 春
-      // Implementation detail: introduce an 'archived' status vs outright retired
-      const multiSeason = makeItem({ id: 'm1', seasons: ['春', '夏'], status: 'available' });
-      const archived = service.archiveSeason([multiSeason], ['夏']);
-      // The item should be temporarily hidden, but retrievable
-      const result = archived.find((i) => i.id === 'm1');
-      expect(result?.status).not.toBe('available');
+    it('archives items whose seasons are entirely within the archived set', () => {
+      const summerTop = makeItem({ id: 's', seasons: ['夏'], status: 'available' });
+      const allYear = makeItem({ id: 'a', seasons: ['春', '夏', '秋', '冬'], status: 'available' });
+      const result = service.archiveSeason([summerTop, allYear], ['夏']);
+      // summer-only item → archived; all-year item → stays available (still relevant in other seasons)
+      expect(result.find((i) => i.id === 's')?.status).toBe('archived');
+      expect(result.find((i) => i.id === 'a')?.status).toBe('available');
+    });
+
+    it('archived items are distinct from retired — archived can be restored', () => {
+      const summerTop = makeItem({ seasons: ['夏'], status: 'available' });
+      const [archived] = service.archiveSeason([summerTop], ['夏']);
+      expect(archived.status).toBe('archived');
+      expect(archived.status).not.toBe('retired');
     });
   });
 
   // ── dormant items ─────────────────────────────────────────────────────────
 
   describe('getDormantItems() (spec §4.5)', () => {
+    // getDormantItems uses new Date() internally; freeze time to keep tests deterministic
+    beforeAll(() => jest.useFakeTimers({ now: new Date('2026-03-01') }));
+    afterAll(() => jest.useRealTimers());
+
     it('returns items not worn for ≥ thresholdDays', () => {
       const dormant = makeItem({ last_worn_date: '2025-09-01' });    // ~6 months ago
-      const recent = makeItem({ id: 'r1', last_worn_date: '2026-02-28' });
+      const recent  = makeItem({ id: 'r1', last_worn_date: '2026-02-28' });
       const neverWorn = makeItem({ id: 'n1', last_worn_date: null, purchase_date: '2025-01-01' });
-      const today = '2026-03-01';
       const result = service.getDormantItems([dormant, recent, neverWorn], 90);
       const ids = result.map((i) => i.id);
       expect(ids).toContain(dormant.id);
@@ -141,6 +149,13 @@ describe('Spec §4.1 — Clothing registration', () => {
     it('excludes retired items from dormant check', () => {
       const retiredOld = makeItem({ status: 'retired', last_worn_date: '2024-01-01' });
       const result = service.getDormantItems([retiredOld], 90);
+      expect(result).toHaveLength(0);
+    });
+
+    it('excludes archived items from dormant check', () => {
+      // Archived items are intentionally stored away — not a sign of neglect
+      const archivedOld = makeItem({ status: 'archived', last_worn_date: '2024-01-01' });
+      const result = service.getDormantItems([archivedOld], 90);
       expect(result).toHaveLength(0);
     });
   });

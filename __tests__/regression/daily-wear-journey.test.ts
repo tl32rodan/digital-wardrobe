@@ -61,6 +61,10 @@ describe('Regression: §4.2–§4.5 — One-week daily wear journey', () => {
   let clothingService: ClothingService;
   let historyRecords: OutfitRecord[];
 
+  // getDormantItems and getRecentHistory use new Date() — freeze to end of simulated week
+  beforeAll(() => jest.useFakeTimers({ now: new Date('2026-03-08') }));
+  afterAll(() => jest.useRealTimers());
+
   beforeEach(() => {
     wardrobe = makeFullWardrobe();
     laundryService = new LaundryService();

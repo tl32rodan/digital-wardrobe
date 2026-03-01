@@ -113,6 +113,23 @@ describe('Spec §4.2 — Daily outfit recommendation', () => {
         if (o.top) expect(o.top.id).not.toBe('retired-top');
       });
     });
+
+    it('excludes archived items (seasonal storage)', () => {
+      // archived = seasonally stored, should not appear in recommendations
+      const archivedTop = makeItem({ id: 'archived-top', status: 'archived' });
+      const wardrobe = [archivedTop, ...makeWardrobe()];
+      const context: RecommendationContext = {
+        weather: makeCoolWeather(),
+        occasion: '休閒',
+        recentHistory: [],
+        preferences: makePreferences(),
+        today: '2026-03-01',
+      };
+      const outfits = service.recommend(wardrobe, context);
+      outfits.forEach((o) => {
+        if (o.top) expect(o.top.id).not.toBe('archived-top');
+      });
+    });
   });
 
   // ── repeat-interval filter ────────────────────────────────────────────────

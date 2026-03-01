@@ -104,13 +104,16 @@ describe('Spec §4.4 — Outfit history', () => {
   // ── recent history ────────────────────────────────────────────────────────
 
   describe('getRecentHistory()', () => {
+    // getRecentHistory uses new Date() internally; freeze time for deterministic results
+    beforeAll(() => jest.useFakeTimers({ now: new Date('2026-03-01') }));
+    afterAll(() => jest.useRealTimers());
+
     it('returns records from the last N days (inclusive)', () => {
       const records = [
-        makeRecord('2026-02-23'), // 7 days ago
+        makeRecord('2026-02-23'), // exactly 7 days ago
         makeRecord('2026-02-25'), // 4 days ago
         makeRecord('2026-03-01'), // today
       ];
-      // Assuming today is 2026-03-01
       const recent = service.getRecentHistory(records, 7);
       expect(recent).toHaveLength(3);
     });
@@ -123,25 +126,8 @@ describe('Spec §4.4 — Outfit history', () => {
       const recent = service.getRecentHistory(records, 7);
       const dates = recent.map((r) => r.date);
       expect(dates).not.toContain('2026-02-01');
+      expect(dates).toContain('2026-02-28');
     });
   });
-
-  // ── dormant items ─────────────────────────────────────────────────────────
-
-  describe('getDormantItems() (spec §4.5 — 90+ days not worn)', () => {
-    it('returns items with last_worn_date > 90 days ago', () => {
-      const dormant = makeItem({ id: 'd', last_worn_date: '2025-10-01' }); // ~150 days
-      const active = makeItem({ id: 'a', last_worn_date: '2026-02-20' });  // ~9 days
-      const records: OutfitRecord[] = [];
-      const result = service.getDormantItems([dormant, active], records, 90);
-      expect(result.map((i) => i.id)).toContain('d');
-      expect(result.map((i) => i.id)).not.toContain('a');
-    });
-
-    it('treats never-worn items as dormant if owned for > 90 days', () => {
-      const neverWorn = makeItem({ id: 'n', last_worn_date: null, purchase_date: '2025-08-01' });
-      const result = service.getDormantItems([neverWorn], [], 90);
-      expect(result).toHaveLength(1);
-    });
-  });
+  // Note: getDormantItems is consolidated in ClothingService (not here)
 });

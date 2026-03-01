@@ -1,6 +1,11 @@
 // Spec §3 — Clothing data structure
 
-export type ClothingStatus = 'available' | 'worn_today' | 'laundry' | 'retired';
+export type ClothingStatus =
+  | 'available'   // in wardrobe, eligible for recommendations
+  | 'worn_today'  // confirmed worn today, pending end-of-day transition
+  | 'laundry'     // in laundry basket
+  | 'archived'    // seasonally stored — still owned, excluded from recommendations
+  | 'retired';    // permanently decommissioned — kept for history reference only
 
 export type Category =
   | 'top'        // 上衣

@@ -3,9 +3,8 @@ import { ClothingItem, OutfitRecord } from '../models/clothing';
 
 export interface WardrobeStats {
   mostWorn: ClothingItem[];          // top N by wear_count
-  leastWorn: ClothingItem[];         // bottom N by wear_count (non-retired)
+  leastWorn: ClothingItem[];         // bottom N by wear_count (non-retired, non-archived)
   lowestCostPerWear: ClothingItem[]; // most cost-efficient
-  dormant: ClothingItem[];           // not worn in 90+ days
 }
 
 export interface MonthlyStats {
@@ -40,14 +39,8 @@ export class HistoryService {
   }
 
   /**
-   * Spec §4.5 — items not worn for ≥ thresholdDays
-   */
-  getDormantItems(_items: ClothingItem[], _records: OutfitRecord[], _thresholdDays: number): ClothingItem[] {
-    throw new Error('Not implemented');
-  }
-
-  /**
-   * Spec §4.4 — get the last N days of worn outfit sets (for repeat-interval checks)
+   * Spec §4.4 — get the last N days of worn outfit sets (for repeat-interval checks).
+   * Uses new Date() internally for the current date reference.
    */
   getRecentHistory(_records: OutfitRecord[], _days: number): OutfitRecord[] {
     throw new Error('Not implemented');

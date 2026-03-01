@@ -32,6 +32,10 @@ describe('Integration: Spec §4.2 — Full daily recommendation pipeline', () =>
   let weatherService: WeatherService;
   let historyService: HistoryService;
 
+  // getRecentHistory uses new Date() internally — freeze to 2026-03-01
+  beforeAll(() => jest.useFakeTimers({ now: new Date('2026-03-01') }));
+  afterAll(() => jest.useRealTimers());
+
   beforeEach(() => {
     outfitService = new OutfitService();
     weatherService = new WeatherService();

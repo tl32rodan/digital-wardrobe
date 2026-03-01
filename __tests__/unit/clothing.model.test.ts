@@ -36,7 +36,7 @@ describe('Spec §3 — Clothing data model', () => {
   // ── status field ──────────────────────────────────────────────────────────
 
   describe('status field', () => {
-    const validStatuses: ClothingStatus[] = ['available', 'worn_today', 'laundry', 'retired'];
+    const validStatuses: ClothingStatus[] = ['available', 'worn_today', 'laundry', 'archived', 'retired'];
 
     it.each(validStatuses)('accepts status "%s"', (status) => {
       const item = makeItem({ status });
